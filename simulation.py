@@ -13,10 +13,13 @@ class BallSim:
         self.noise_strength = noise_strength
 
         self.x = self.x0
-        self.t = 0.
+        self.t = 0.0
+        self.step_counter = 0
+        self.max_steps = int(np.ceil(self.t_end / self.dt))
 
-        self.t_arr = np.arange(0, self.t_end, self.dt)
+        self.t_arr = np.linspace(0, self.t_end, self.max_steps + 1, endpoint=True)
         self.x_arr = np.full_like(self.t_arr, np.nan)
+        self.x_arr[0] = self.x0
 
 
     def step(self, u: float):
@@ -25,10 +28,11 @@ class BallSim:
         self.x += self.dt * u_total
         self.t += self.dt
 
-        # Save current state
-        idx = int(self.t / self.dt) - 1  # match array index
-        if idx < len(self.x_arr):
-            self.x_arr[idx] = self.x
+        self.step_counter += 1
+        self.x_arr[self.step_counter] = self.x
+
+    def step_counter_less_than_max_steps(self):
+        return self.step_counter < self.max_steps
 
     def in_goal(self):
         return self.goal[0] <= self.x <= self.goal[1]
