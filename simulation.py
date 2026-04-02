@@ -9,6 +9,9 @@ class BallSim:
         self.dt = dt
         self.goal = goal
 
+        if self.goal[0] > self.goal[1]:
+            raise ValueError('Left bound of goal must be lower than right bound!')
+
         self.rng = np.random.default_rng(seed)
         self.noise_strength = noise_strength
 
@@ -57,6 +60,21 @@ class BallSim:
         self.v_arr[self.step_counter] = self.v
         self.a_arr[self.step_counter] = self.a
 
+    def step_with_agent(self, agent):
+
+        state = self.get_state()
+        self.a = agent.act(state)
+        self.step()
+
+    def get_state(self):
+        return {
+            'x': self.x,
+            'v': self.v,
+            'a': self.a,
+            'goal_min': self.goal[0],
+            'goal_max': self.goal[1],
+            'max_acceleration': self.max_acceleration
+        }
 
     def step_counter_less_than_max_steps(self):
         return self.step_counter < self.max_steps
