@@ -2,15 +2,12 @@ import numpy as np
 
 
 class BallSim:
-    def __init__(self, x0: float, t_end: float, dt: float, noise_strength: float, seed: int, goal: tuple = (5, 6), max_acceleration: float = 5):
+    def __init__(self, x0: float, t_end: float, dt: float, noise_strength: float, seed: int, goal_center: float = 5.0,
+                 goal_width: float = 1.0, max_acceleration: float = 5, goal_movement: str = None):
 
         self.x0 = x0
         self.t_end = t_end
         self.dt = dt
-        self.goal = goal
-
-        if self.goal[0] > self.goal[1]:
-            raise ValueError('Left bound of goal must be lower than right bound!')
 
         self.rng = np.random.default_rng(seed)
         self.noise_strength = noise_strength
@@ -33,6 +30,35 @@ class BallSim:
         self.v_arr[0] = self.v
         self.a_arr[0] = self.a
 
+        self.initial_goal_center = goal_center
+        self.initial_goal_width = goal_width
+
+        supported_goal_movement_funcs = {
+            'oscillating': self.gm_oscillation,
+            'linear': self.gm_linear
+        }
+
+
+        if goal_movement is None:
+            self.goal_center_arr = np.full_like(self.t_arr, self.initial_goal_center)
+            self.goal_width_arr = np.full_like(self.t_arr, self.initial_goal_width)
+        else:
+            try:
+                supported_goal_movement_funcs[goal_movement]()
+            except KeyError as e:
+                raise NotImplementedError(f'Goal Movement Function Not Supported: {e}')
+
+        self.goal_lower_arr = self.goal_center_arr - self.goal_width_arr / 2
+        self.goal_upper_arr = self.goal_center_arr + self.goal_width_arr / 2
+
+
+    def gm_oscillation(self):
+        self.goal_center_arr = 5 * np.sin(self.t_arr) + self.initial_goal_center
+        self.goal_width_arr = np.full_like(self.t_arr, self.initial_goal_width)
+
+    def gm_linear(self):
+        self.goal_center_arr = self.initial_goal_center + self.t_arr
+        self.goal_width_arr = np.full_like(self.t_arr, self.initial_goal_width)
 
     def set_acceleration(self, new_a: float):
 
@@ -67,20 +93,25 @@ class BallSim:
         self.step()
 
     def get_state(self):
+
+        if self.step_counter == 0:
+            goal_center = [self.goal_center_arr[0]]
+            goal_width = [self.goal_width_arr[0]]
+        else:
+            goal_center = self.goal_center_arr[:self.step_counter]
+            goal_width = self.goal_width_arr[:self.step_counter]
+
         return {
             'x': self.x,
             'v': self.v,
             'a': self.a,
-            'goal_min': self.goal[0],
-            'goal_max': self.goal[1],
+            'goal_center': goal_center,
+            'goal_width': goal_width,
             'max_acceleration': self.max_acceleration
         }
 
     def step_counter_less_than_max_steps(self):
         return self.step_counter < self.max_steps
 
-    def in_goal(self):
-        return self.goal[0] <= self.x <= self.goal[1]
-
-
-
+    def get_goal_bounds(self):
+        return self.goal_lower_arr[self.step_counter] <= self.x <= self.goal_upper_arr[self.step_counter]

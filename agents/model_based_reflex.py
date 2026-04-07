@@ -14,18 +14,18 @@ class ModelBasedReflexAgent(BaseAgent):
         v = state['v']
         a = state['a']
         max_a = state['max_acceleration']
-        goal_min = state['goal_min']
-        goal_max = state['goal_max']
+        goal_center = state['goal_center'][-1]  # take only current center
+        goal_width = state['goal_width'][-1]
 
-        goal_center = 0.5 * (goal_max + goal_min)
+        in_goal = (goal_center - goal_width / 2 <= x <= goal_center + goal_width / 2)
 
-        if goal_min <= x <= goal_max:
+        if in_goal:
             if np.abs(v) < 1e-6:
                 set_a = 0
                 return set_a
 
         if a == 0:
-            if not goal_min <= x <= goal_max:
+            if not in_goal:
                 set_a = max_a * np.sign(x - goal_center)
         else:
             stopping_distance = np.abs((v ** 2) / (2 * a))

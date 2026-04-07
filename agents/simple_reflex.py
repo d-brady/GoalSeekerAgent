@@ -17,12 +17,12 @@ class SimpleReflexAgent(BaseAgent):
         x = state['x']
         v = state['v']
         a = state['a']
-        goal_min = state['goal_min']
-        goal_max = state['goal_max']
+        goal_center = state['goal_center'][-1]  # take only current center
+        goal_width = state['goal_width'][-1]
 
-        goal_center = 0.5 * (goal_max + goal_min)
+        in_goal = (goal_center - goal_width / 2 <= x <= goal_center + goal_width / 2)
 
-        if goal_min <= x <= goal_max:
+        if in_goal:
             if np.abs(v) < 1e-6:
                 set_a = 0
             else:
