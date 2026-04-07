@@ -10,7 +10,7 @@ def test_initial_state():
     assert(sim.t == 0)
 
 
-def test_time_evolution_no_kicks():
+def test_final_state():
 
     sim = BallSim(x0=0, t_end=1, dt=0.1, noise_strength=0, seed=42)
 
@@ -21,7 +21,7 @@ def test_time_evolution_no_kicks():
     assert(np.isclose(sim.t, sim.t_end))
 
 
-def test_time_evolution_all_array_values_filled_and_real():
+def test_filling_of_save_arrays():
 
     sim = BallSim(x0=0, t_end=1, dt=0.1, noise_strength=1, seed=42)
 
@@ -30,9 +30,11 @@ def test_time_evolution_all_array_values_filled_and_real():
 
     assert sim.max_steps + 1 == len(sim.x_arr)
     assert not np.isnan(sim.x_arr).any()
+    assert not np.isnan(sim.v_arr).any()
+    assert not np.isnan(sim.a_arr).any()
 
 
-def test_ball_in_goal():
+def test_method_in_goal():
 
     sim = BallSim(x0=0, t_end=1, dt=0.1, noise_strength=0, seed=42, goal=(-0.1, 0.1))
 
@@ -42,7 +44,7 @@ def test_ball_in_goal():
     assert sim.in_goal()
 
 
-def test_acceleration():
+def test_equations_of_motion():
 
     sim = BallSim(x0=0, t_end=5, dt=0.1, noise_strength=0, seed=42, goal=(-0.1, 0.1))
 
